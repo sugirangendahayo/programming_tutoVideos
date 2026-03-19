@@ -15,10 +15,8 @@ $preferred_order = ['Python', 'JavaScript', 'PHP'];
 
 // Convert result to array for custom sorting
 $courses = [];
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $courses[] = $row;
-    }
+if ($result && $result->rowCount() > 0) {
+    $courses = $result->fetchAll();
 }
 
 // Custom sorting function

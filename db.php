@@ -1,20 +1,50 @@
 <?php
-// Database connection configuration
-$host = 'localhost';
-$username = 'root';
-$password = '';
-$database = 'programming_tutorials';
-
-// Create connection
-$conn = new mysqli($host, $username, $password, $database);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Load environment variables
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        return;
+    }
+    
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '#') === 0) {
+            continue;
+        }
+        
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+        }
+    }
 }
 
-// Set charset to utf8mb4
-$conn->set_charset("utf8mb4");
+// Load .env file
+loadEnv(__DIR__ . '/.env');
+
+// Database connection configuration
+$host = getenv('DB_HOST') ?: 'localhost';
+$username = getenv('DB_USERNAME') ?: 'root';
+$password = getenv('DB_PASSWORD') ?: '';
+$database = getenv('DB_DATABASE') ?: 'programming_tutorials';
+
+// Create connection
+try {
+    $conn = new PDO(
+        "pgsql:host=$host;dbname=$database",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 
 // Function to format numbers (views, likes, comments)
 function formatNumber($num) {

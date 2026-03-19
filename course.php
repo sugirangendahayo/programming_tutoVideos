@@ -12,17 +12,15 @@ if ($course_id === 0) {
 // Get course details
 $course_query = "SELECT course_name FROM courses WHERE id = ?";
 $stmt = $conn->prepare($course_query);
-$stmt->bind_param("i", $course_id);
-$stmt->execute();
-$course_result = $stmt->get_result();
+$stmt->execute([$course_id]);
+$course_result = $stmt->fetch();
 
-if ($course_result->num_rows === 0) {
+if (!$course_result) {
     header('Location: index.php');
     exit;
 }
 
-$course = $course_result->fetch_assoc();
-$course_name = $course['course_name'];
+$course_name = $course_result['course_name'];
 
 // Get videos for this course with 1M+ views
 $videos_query = "SELECT id, title, youtube_id, views, likes, comments 
@@ -31,15 +29,11 @@ $videos_query = "SELECT id, title, youtube_id, views, likes, comments
                  ORDER BY views DESC";
 
 $stmt = $conn->prepare($videos_query);
-$stmt->bind_param("i", $course_id);
-$stmt->execute();
-$videos_result = $stmt->get_result();
+$stmt->execute([$course_id]);
+$videos_result = $stmt->fetchAll();
 
 // Collect videos into array so we can count them
-$videos = [];
-if ($videos_result && $videos_result->num_rows > 0) {
-    while ($v = $videos_result->fetch_assoc()) $videos[] = $v;
-}
+$videos = $videos_result;
 
 // Course icons & accent colors (same as index.php)
 $course_icons = [
